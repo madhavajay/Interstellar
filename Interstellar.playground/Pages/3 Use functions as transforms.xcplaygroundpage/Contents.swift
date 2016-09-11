@@ -5,7 +5,7 @@
 import Interstellar
 
 let text = Signal<String>()
-let greet: String->String = { subject in
+let greet: (String) -> String = { subject in
     return "Hello \(subject)"
 }
 text

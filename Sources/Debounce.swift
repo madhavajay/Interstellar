@@ -21,14 +21,34 @@
 // THE SOFTWARE.
 
 import Foundation
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func <= <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l <= r
+  default:
+    return !(rhs < lhs)
+  }
+}
+
 
 private var SignalUpdateCalledHandle: UInt8 = 0
 public extension Signal {
     #if os(Linux)
     #else
-    internal var lastCalled: NSDate? {
+    internal var lastCalled: Date? {
         get {
-            if let handle = objc_getAssociatedObject(self, &SignalUpdateCalledHandle) as? NSDate {
+            if let handle = objc_getAssociatedObject(self, &SignalUpdateCalledHandle) as? Date {
                 return handle
             } else {
                 return nil
@@ -44,21 +64,21 @@ public extension Signal {
         call to update will always be delivered (although it might be delayed up to the
         specified amount of seconds).
     */
-    public func debounce(seconds: NSTimeInterval) -> Signal<T> {
+    public func debounce(_ seconds: TimeInterval) -> Signal<T> {
         let signal = Signal<T>()
         
         subscribe { result in
-            let currentTime = NSDate()
-            func updateIfNeeded(signal: Signal<T>) -> Result<T> -> Void {
+            let currentTime = Date()
+            func updateIfNeeded(_ signal: Signal<T>) -> (Result<T>) -> Void {
                 return { result in
                     let timeSinceLastCall = signal.lastCalled?.timeIntervalSinceNow
                     if timeSinceLastCall == nil || timeSinceLastCall <= -seconds {
                         // no update before or update outside of debounce window
-                        signal.lastCalled = NSDate()
+                        signal.lastCalled = Date()
                         signal.update(result)
                     } else {
                         // skip result if there was a newer result
-                        if currentTime.compare(signal.lastCalled!) == .OrderedDescending {
+                        if currentTime.compare(signal.lastCalled!) == .orderedDescending {
                             let s = Signal<T>()
                             s.delay(seconds - timeSinceLastCall!).subscribe(updateIfNeeded(signal))
                             s.update(result)

@@ -57,7 +57,7 @@ getFuelLevelsFromSpaceStation()
     }
     .flatMap { fuelPortIsOpen -> Signal<Int> in
         if fuelPortIsOpen {
-            return refuelSpaceStationFromFuelPack(fuelPackSize)
+            return refuelSpaceStationFromFuelPack(fuelPackSize: fuelPackSize)
         }
         return Signal(0)
     }
