@@ -31,30 +31,36 @@ public final class Thread {
     #if os(Linux)
     #else
     /// Transform a signal to the main queue
-    public static func main<T>(a: Result<T>, completion: Result<T>->Void) {
-        queue(dispatch_get_main_queue())(a, completion)
+    public static func main<T>(_ a: Result<T>, completion: (Result<T>)->Void) {
+        queue(DispatchQueue.main)(a, completion)
     }
     #endif
     
     #if os(Linux)
     #else
     /// Transform the signal to a specified queue
-    public static func queue<T>(queue: dispatch_queue_t) -> (Result<T>, Result<T>->Void) -> Void {
-        return { a, completion in
-            dispatch_async(queue){
+    public static func queue<T>(_ queue: DispatchQueue) -> (Result<T>, (Result<T>)->Void) -> Void {
+        return { (a: Result<T>, completion: @escaping (Result<T>) -> Void) in
+            queue.async{
                 completion(a)
             }
-        }
+        } as! (Result<T>, (Result<T>) -> Void) -> Void
     }
     #endif
     
     #if os(Linux)
     #else
     /// Transform the signal to a global background queue with priority default
-    public static func background<T>(a: Result<T>, completion: Result<T>->Void) {
-        let q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-        dispatch_async(q) {
-            completion(a)
+    public static func background<T>(_ a: Result<T>, completion: @escaping (Result<T>)->Void) {
+//        let q = DispatchQueue.global(priority: DispatchQueue.GlobalQueuePriority.default)
+        if #available(OSX 10.10, *) {
+            let q = DispatchQueue(label: "defaultQueue", qos: .default, attributes: .concurrent, autoreleaseFrequency: .inherit, target: nil)
+            q.async {
+                completion(a)
+            }
+        } else {
+            // Fallback on earlier versions
+            print("iOS version error")
         }
     }
     #endif

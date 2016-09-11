@@ -8,7 +8,7 @@ import Interstellar
 let text = Signal<String>()
 func greetMaybe(subject: String)->Result<String> {
     if subject.characters.count % 2 == 0 {
-        return .Success("Hello \(subject)")
+        return .success("Hello \(subject)")
     } else {
         let error = NSError(domain: "Don't feel like greeting you.", code: 401, userInfo: nil)
         return .Error(error)
@@ -22,6 +22,7 @@ text
     .error { error in
         print("There was a greeting error")
     }
-text.update(.Success("World"))
+text
+    .update(.success("World"))
 
 //: [Next](@next)
